@@ -1,6 +1,7 @@
-const version = "v3.0.3";
+const version = "v3.0.4";
 
 self.addEventListener("install", (event) => {
+	self.skipWaiting();
 	event.waitUntil(
 		caches
 			.open(version)
@@ -21,10 +22,31 @@ self.addEventListener("install", (event) => {
 	);
 });
 
-self.addEventListener("fetch", function (event) {
-	event.respondWith(cacheOrNetwork(event.request));
-	event.waitUntil(updateCache(event.request));
+self.addEventListener("activate", (event) => {
+	event.waitUntil(
+		caches
+			.keys()
+			.then((keys) =>
+				Promise.all(
+					keys.filter((key) => key !== version).map((key) => caches.delete(key))
+				)
+			)
+			.then(() => self.clients.claim())
+	);
 });
+
+self.addEventListener("fetch", function (event) {
+	if (!isCacheableRequest(event.request)) return;
+	event.respondWith(cacheOrNetwork(event.request));
+	event.waitUntil(updateCache(event.request).catch(() => undefined));
+});
+
+function isCacheableRequest(request) {
+	if (request.method !== "GET") return false;
+
+	const url = new URL(request.url);
+	return url.origin === self.location.origin;
+}
 
 function fromNetwork(request) {
 	return fetch(request);
@@ -45,11 +67,12 @@ function fromCache(request) {
 }
 
 function updateCache(request) {
-	return caches
-		.open(version)
-		.then((cache) =>
-			fetch(request).then((response) =>
-				cache.put(request, response.clone()).then(() => response)
-			)
-		);
+	if (!isCacheableRequest(request)) return Promise.resolve();
+
+	return caches.open(version).then((cache) =>
+		fetch(request).then((response) => {
+			if (!response || !response.ok) return response;
+			return cache.put(request, response.clone()).then(() => response);
+		})
+	);
 }
