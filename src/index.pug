@@ -67,10 +67,6 @@ html(lang="{{ lang_code }}" dir="{{ dir }}")
 			+overlay
 			+footer
 
-		script.
-			window.DATAVIZ_HEADER_CONFIG = { requiredScope: 'viz' };
-		script(src='https://app.dataviz.jp/lib/supabase.js')
-		script(src='https://app.dataviz.jp/lib/dataviz-auth-client.js')
 		script(src='./index.ts' async)
 		link(href="./keyframes.css" rel="stylesheet")
 

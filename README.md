@@ -21,7 +21,6 @@ yarn run build
 yarn run start
 ```
 ブラウザで `http://localhost:1234` を開きます。  
-認証デバッグは `http://localhost:1234/?auth_debug` です。  
 停止は `Ctrl+C` です。
 
 ## トラブルシュート
